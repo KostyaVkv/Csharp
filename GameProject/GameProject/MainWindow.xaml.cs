@@ -31,7 +31,7 @@ namespace GameProject
         int[] SetGemY = new int [3];
         int WallX = 200;
         int WallY = 300;
-       
+        
         Random r = new Random();
         
 
@@ -56,15 +56,7 @@ namespace GameProject
             map.ContainerSetCoordinate("fire", FireX, FireY);
             map.ContainerSetZIndex("fire", 102);
             map.ContainerSetIndents("fire", 5, 5);
-            for (int i = 0; i <= 2; i++)
-            {
-                int random1 = r.Next(1, 5);
-                int random2 = r.Next(1, 5);
-                SetGemX[i] = 500 - random1 * 100;
-                SetGemY[i] = 500 + random2 * 100;
-                SetGemX[i] = 500 + random1 * 10;
-                SetGemY[i] = 500 - random2 * 10;
-            }
+           
             
            
             map.Library.AddContainer("wall", "wall");
@@ -102,7 +94,7 @@ namespace GameProject
             map.ContainerSetCoordinate(ContainerName, x, y);
             map.ContainerSetZIndex(ContainerName, z);
         }
-         
+        
         void CheckKey()
         {
             FireSaveX = FireX;
@@ -110,97 +102,104 @@ namespace GameProject
             bool Moving = false;
             if (map.Keyboard.IsKeyPressed(Key.W))
             {
-                FireY--;
-                FireY--;
-                FireY--;
+                FireY-=5;
+                              
                 Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.A))
             {
-                FireX--;
-                FireX--;
-                FireX--;
+                FireX-=5;
+                               
                 Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.D))
             {
-                FireX++;
-                FireX++;
-                FireX++;
+                FireX+=5;
+                
                 Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.S))
             {
-                FireY++;
-                FireY++;
-                FireY++;
+                FireY+=5;
+                
                 Moving = true;
             }
-            if (Moving)
-            {
-                map.ContainerMovePreview("fire", FireX, FireY, 0);
-                if (!(map.CollisionContainers("fire", "wall", true)))
-                {
-                        
+            
+             if (Moving)
+             {
+                    map.ContainerMovePreview("fire", FireX, FireY, 0);
+                 if (!(map.CollisionContainers("fire", "wall", true)))
+                 {
                     map.ContainerSetCoordinate("fire", FireX, FireY);
-                    if (map.CollisionContainers("fire", "Gem0"))
-                    {
-                            for (int i = 0; i <= 2; i++)
-                            {
-                                SetGemX[i] = r.Next(0, 1820);
-                                SetGemY[i] = r.Next(0, 980);
+                       
+                   
+                   Coordinate[] SetGem = new Coordinate[3];
+                   for (int i = 0; i <= 2; i++)
+                   {
+                   if (map.CollisionContainers("fire", "Gem" + i.ToString()))
+                   
+                    SetGem[i]=new Coordinate();
+                    SetGem[i].GetGem(FireX,FireY,i);
+                  
+                    map.ContainerSetCoordinate("Gem" + i.ToString(), SetGem[i].X, SetGem[i].Y);
+                   }
+                    
+                 }
 
-                                if (FireX - SetGemX[i] <= 100 || FireY - SetGemY[i] <= 100 || SetGemX[i] - FireX <= 100 || SetGemY[i] - FireY <= 100)
-                                {
-                                    if (FireX < 100 || FireY < 100)
-                                    {
-                                        SetGemX[i] +=101;
-                                        SetGemY[i] +=101;
-                                    }
-                                    if (FireX > 1720 || FireY > 880)
-                                    {
-                                        SetGemX[i] -=101;
-                                        SetGemY[i] -=101;
-                                    }
-                                    if (FireX > 1720 || FireY < 100)
-                                    {
-                                        SetGemX[i] -=101;
-                                        SetGemY[i] +=101;
-                                    }
-                                    if (FireX < 100 || FireY > 880)
-                                    {
-                                        SetGemX[i] +=101;
-                                        SetGemY[i] -=101;
-                                    }
-
-                                }
-                                if (SetGemX[i] >= 1820 || SetGemY[i] >= 980 || SetGemX[i] < 0 || SetGemY[i] < 0)
-                                {
-                                    int random1 = r.Next(1, 5);
-                                    int random2 = r.Next(1, 5);
-                                    SetGemX[i] = 500 - random1 * 100;
-                                    SetGemY[i] = 500 + random2 * 100;
-                                    SetGemX[i] = 500 + random1 * 10;
-                                    SetGemY[i] = 500 - random2 * 10;
-                            }
-                                if (i == 0)
-                                    map.ContainerSetCoordinate("Gem0", SetGemX[i], SetGemY[i]);
-                                if (i == 1)
-                                    map.ContainerSetCoordinate("Gem1", SetGemX[i], SetGemY[i]);
-                                if (i == 2)
-                                    map.ContainerSetCoordinate("Gem2", SetGemX[i], SetGemY[i]);
-                            }
-                        }
-                    }
-                  else
-                  {
-                    FireX = FireSaveX;
-                    FireY = FireSaveY;
-                    map.ContainerSetCoordinate("fire", FireX, FireY);
-                  }
-
-            }
-
+                 else
+                 {
+                   FireX = FireSaveX;
+                   FireY = FireSaveY;
+                   map.ContainerSetCoordinate("fire", FireX, FireY);
+                 }
+             }
+                    
         }
     }
 }
+  class Coordinates
+  {
+        public int X=0;
+        public int Y=0;
+     Random r = new Random();
+    Coordinate[] SetGem = new Coordinate[3];
+    public void GetGem(int FireX,int FireY,int i)
+    {
+         SetGem[i]=new Coordinate();
+       
+        SetGem[i].X = r.Next(0, 1820);
+        SetGem[i].Y = r.Next(0, 980);
+        if (FireX - SetGem[i].X <= 100 || FireY - SetGem[i].Y <= 100 || SetGem[i].X - FireX <= 100 || SetGem[i].Y - FireY <= 100)
+        {
+          if (FireX < 100 || FireY < 100)
+          {
+            SetGem[i].X += 101;
+            SetGem[i].Y += 101;
+          }
+          if (FireX > 1720 || FireY > 880)
+          {
+            SetGem[i].X -= 101;
+            SetGem[i].Y -= 101;
+          }
+          if (FireX > 1720 || FireY < 100)
+          {
+            SetGem[i].X -= 101;
+            SetGem[i].Y += 101;
+          }
+          if (FireX < 100 || FireY > 880)
+          {
+            SetGem[i].X += 101;
+            SetGem[i].Y -= 100;
+          }
+        }
+        if (SetGem[i].X >= 1820 || SetGem[i].Y >= 980 || SetGem[i].X < 0 || SetGem[i].Y < 0)
+        {
+          SetGem[i].X = 500 - i * 100;
+          SetGem[i].Y = 500 + i * 100;
+          SetGem[i].X = 500 + i * 10;
+          SetGem[i].Y = 500 - i * 10;
+     
+        }
+       
+    } 
+  }
