@@ -35,17 +35,21 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BaseLogic">
-      <HintPath>..\..\..\..\..\..\DLL\BaseLogic.dll</HintPath>
+    <Reference Include="BaseLogic, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLL\BaseLogic.dll</HintPath>
     </Reference>
-    <Reference Include="CanvasVisualisation">
-      <HintPath>..\..\..\..\..\..\DLL\CanvasVisualisation.dll</HintPath>
+    <Reference Include="CanvasVisualisation, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLL\CanvasVisualisation.dll</HintPath>
     </Reference>
-    <Reference Include="Interaction">
-      <HintPath>..\..\..\..\..\..\DLL\Interaction.dll</HintPath>
+    <Reference Include="Interaction, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLL\Interaction.dll</HintPath>
     </Reference>
-    <Reference Include="LabLib">
-      <HintPath>..\..\..\..\..\..\DLL\LabLib.dll</HintPath>
+    <Reference Include="LabLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLL\LabLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

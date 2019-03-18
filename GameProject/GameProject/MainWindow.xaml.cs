@@ -27,13 +27,14 @@ namespace GameProject
         int FireY = 0;
         int FireSaveX = 0;
         int FireSaveY = 0;
-        int[] SetGemX = new int [3];
-        int[] SetGemY = new int [3];
+        int[] SetGemX = new int[3];
+        int[] SetGemY = new int[3];
         int WallX = 200;
         int WallY = 300;
-        
+        int PlayerWalk=3;
+        int PlayerRun;
         Random r = new Random();
-        
+        Gem[] Gems = new Gem[3];
 
 
 
@@ -42,7 +43,8 @@ namespace GameProject
 
             InitializeComponent();
             map = MapCreator.CreateMap(this, 38, 20, 50);
-            
+            Gem.map = map;
+            map.Library.ImagesFolder = new PathInfo { Path = "..\\..\\images", Type = PathType.Relative };
             map.Library.AddPicture("wall", "wall.png");
             map.Library.AddPicture("fire", "fire.png");
             map.Library.AddPicture("Gem0", "gem_green.png");
@@ -50,26 +52,23 @@ namespace GameProject
             map.Library.AddPicture("Gem2", "gem_red.png");
             map.Library.AddPicture("stones", "stones.jpg");
             map.SetMapBackground("stones");
-            
+            PlayerRun = PlayerWalk * 2;
             map.Library.AddContainer("fire", "fire");
             map.ContainerSetSize("fire", 50, 50);
             map.ContainerSetCoordinate("fire", FireX, FireY);
             map.ContainerSetZIndex("fire", 102);
             map.ContainerSetIndents("fire", 5, 5);
-           
-            
-           
+
+
+
             map.Library.AddContainer("wall", "wall");
             map.ContainerSetSize("wall", 50, 50);
             map.ContainerSetCoordinate("wall", WallX, WallY);
-                        
-          
-           
-            for(int i=0;i<=2;i++)
-            {
-                CreateContainers("Gem"+i.ToString(), SetGemX[0], SetGemY[0], 101, "Gem"+i.ToString());
-            }
+
+
+            CreateGems();
             
+
             timer.AddAction(CheckKey, 10);
             //Done:Доделать движение: устранить эффект перепрыгивания стены, вернув координаты в исходное состояние; добавить 2 кнопки.
             //Dont know how:Сделать функцию, которая принимает все параметры контейнера и создает его, чтобы в основной программе можно было создать контейнер в одну строчку.
@@ -86,120 +85,159 @@ namespace GameProject
         /// <param name="y"></param>
         /// <param name="z">Индекс</param>
         /// <param name="Picturename">Название Картинки из биоблитеки</param>
-        void CreateContainers(string ContainerName,int x,int y,int z, string Picturename)
+        void CreateContainers(string ContainerName,  int z, string Picturename)
         {
             map.Library.AddContainer(ContainerName, Picturename);
             map.ContainerSetSize(ContainerName, 50, 50);
             map.ContainerSetIndents(ContainerName, 5, 5);
-            map.ContainerSetCoordinate(ContainerName, x, y);
+         
             map.ContainerSetZIndex(ContainerName, z);
         }
+        void CreateGems()
+        {
+            for (int i = 0; i <= 2; i++)
+            {
+                Gems[i] = new Gem();
+                Gems[i].ContainerName = "Gem" + i.ToString();
+                Gems[i].Picture = "Gem" + i.ToString();
+               
+                CreateContainers(Gems[i].ContainerName, 101, Gems[i].Picture);
+                SetGemRandomCoordinate(Gems[i]);
+
+            }
+        }
+        void CollectGems()
+        {
+            for (int i = 0; i < Gems.Length; i++)
+            {
+                if (map.CollisionContainers("fire", "Gem" + i.ToString()))
+                {
+                    SetGemRandomCoordinate(Gems[i]);
+                }
+            }
+        }
         
+        void SetGemRandomCoordinate(Gem G)
+        {
+            //TODO:Сделать нормальнеы рандомные координаты
+            G.SetCoordinates(r.Next(0, 500), r.Next(0, 500));
+        }
         void CheckKey()
         {
             FireSaveX = FireX;
             FireSaveY = FireY;
             bool Moving = false;
+            int Speed;
+            if (map.Keyboard.IsKeyPressed(Key.LeftShift))
+                Speed = PlayerRun;
+            else
+                Speed = PlayerWalk;
             if (map.Keyboard.IsKeyPressed(Key.W))
             {
-                FireY-=5;
-                              
+                FireY -= Speed;
+
                 Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.A))
             {
-                FireX-=5;
-                               
+                FireX -= Speed;
+
                 Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.D))
             {
-                FireX+=5;
-                
+                FireX += Speed;
+
                 Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.S))
             {
-                FireY+=5;
-                
+                FireY += Speed;
+
                 Moving = true;
             }
-            
-             if (Moving)
-             {
-                    map.ContainerMovePreview("fire", FireX, FireY, 0);
-                 if (!(map.CollisionContainers("fire", "wall", true)))
-                 {
-                    map.ContainerSetCoordinate("fire", FireX, FireY);
-                       
-                   
-                   Coordinate[] SetGem = new Coordinate[3];
-                   for (int i = 0; i <= 2; i++)
-                   {
-                   if (map.CollisionContainers("fire", "Gem" + i.ToString()))
-                   
-                    SetGem[i]=new Coordinate();
-                    SetGem[i].GetGem(FireX,FireY,i);
-                  
-                    map.ContainerSetCoordinate("Gem" + i.ToString(), SetGem[i].X, SetGem[i].Y);
-                   }
-                    
-                 }
 
-                 else
-                 {
-                   FireX = FireSaveX;
-                   FireY = FireSaveY;
-                   map.ContainerSetCoordinate("fire", FireX, FireY);
-                 }
-             }
-                    
+            if (Moving)
+            {
+                map.ContainerMovePreview("fire", FireX, FireY, 0);
+                if (!(map.CollisionContainers("fire", "wall", true)))
+                {
+                    map.ContainerSetCoordinate("fire", FireX, FireY);
+                    CollectGems();
+                }
+
+                else
+                {
+                    FireX = FireSaveX;
+                    FireY = FireSaveY;
+                    map.ContainerSetCoordinate("fire", FireX, FireY);
+                }
+            }
+
         }
     }
-}
-  class Coordinates
-  {
-        public int X=0;
-        public int Y=0;
-     Random r = new Random();
-    Coordinate[] SetGem = new Coordinate[3];
-    public void GetGem(int FireX,int FireY,int i)
+    class Gem
     {
-         SetGem[i]=new Coordinate();
-       
-        SetGem[i].X = r.Next(0, 1820);
-        SetGem[i].Y = r.Next(0, 980);
-        if (FireX - SetGem[i].X <= 100 || FireY - SetGem[i].Y <= 100 || SetGem[i].X - FireX <= 100 || SetGem[i].Y - FireY <= 100)
+        public int X { get; private set; }
+        public int Y { get; private set; }
+        static public UniversalMap_Wpf map;
+        public string Picture ;
+        public string ContainerName;
+        public void SetCoordinates(int x,int y)
         {
-          if (FireX < 100 || FireY < 100)
-          {
-            SetGem[i].X += 101;
-            SetGem[i].Y += 101;
-          }
-          if (FireX > 1720 || FireY > 880)
-          {
-            SetGem[i].X -= 101;
-            SetGem[i].Y -= 101;
-          }
-          if (FireX > 1720 || FireY < 100)
-          {
-            SetGem[i].X -= 101;
-            SetGem[i].Y += 101;
-          }
-          if (FireX < 100 || FireY > 880)
-          {
-            SetGem[i].X += 101;
-            SetGem[i].Y -= 100;
-          }
+            X = x;
+            Y = y;
+            map.ContainerSetCoordinate(ContainerName,x,y);
         }
-        if (SetGem[i].X >= 1820 || SetGem[i].Y >= 980 || SetGem[i].X < 0 || SetGem[i].Y < 0)
+    }
+
+    
+    class Coordinates
+    {
+        public int X = 0;
+        public int Y = 0;
+        Random r = new Random();
+        Coordinate[] SetGem = new Coordinate[3];
+        public void GetGem(int FireX, int FireY, int i)
         {
-          SetGem[i].X = 500 - i * 100;
-          SetGem[i].Y = 500 + i * 100;
-          SetGem[i].X = 500 + i * 10;
-          SetGem[i].Y = 500 - i * 10;
-     
+            SetGem[i] = new Coordinate();
+
+            SetGem[i].X = r.Next(0, 1820);
+            SetGem[i].Y = r.Next(0, 980);
+            if (FireX - SetGem[i].X <= 100 || FireY - SetGem[i].Y <= 100 || SetGem[i].X - FireX <= 100 || SetGem[i].Y - FireY <= 100)
+            {
+                if (FireX < 100 || FireY < 100)
+                {
+                    SetGem[i].X += 101;
+                    SetGem[i].Y += 101;
+                }
+                if (FireX > 1720 || FireY > 880)
+                {
+                    SetGem[i].X -= 101;
+                    SetGem[i].Y -= 101;
+                }
+                if (FireX > 1720 || FireY < 100)
+                {
+                    SetGem[i].X -= 101;
+                    SetGem[i].Y += 101;
+                }
+                if (FireX < 100 || FireY > 880)
+                {
+                    SetGem[i].X += 101;
+                    SetGem[i].Y -= 100;
+                }
+            }
+            if (SetGem[i].X >= 1820 || SetGem[i].Y >= 980 || SetGem[i].X < 0 || SetGem[i].Y < 0)
+            {
+                SetGem[i].X = 500 - i * 100;
+                SetGem[i].Y = 500 + i * 100;
+                SetGem[i].X = 500 + i * 10;
+                SetGem[i].Y = 500 - i * 10;
+
+            }
+
         }
-       
-    } 
-  }
+
+
+    }
+}
