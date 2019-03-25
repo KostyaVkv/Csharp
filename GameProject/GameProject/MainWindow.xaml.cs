@@ -40,7 +40,6 @@ namespace GameProject
 
         public MainWindow()
         {
-
             InitializeComponent();
             map = MapCreator.CreateMap(this, 38, 20, 50);
             Gem.map = map;
@@ -58,17 +57,11 @@ namespace GameProject
             map.ContainerSetCoordinate("fire", FireX, FireY);
             map.ContainerSetZIndex("fire", 102);
             map.ContainerSetIndents("fire", 5, 5);
-
-
-
             map.Library.AddContainer("wall", "wall");
             map.ContainerSetSize("wall", 50, 50);
             map.ContainerSetCoordinate("wall", WallX, WallY);
-
-
             CreateGems();
             
-
             timer.AddAction(CheckKey, 10);
             //Done:Доделать движение: устранить эффект перепрыгивания стены, вернув координаты в исходное состояние; добавить 2 кнопки.
             //Dont know how:Сделать функцию, которая принимает все параметры контейнера и создает его, чтобы в основной программе можно было создать контейнер в одну строчку.
