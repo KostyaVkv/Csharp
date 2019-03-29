@@ -25,12 +25,9 @@ namespace GameProject
         Players Player = new Players();
         int[] SetGemX = new int[3];
         int[] SetGemY = new int[3];
-        int WallX = 200;
-        int WallY = 300;
         int PlayerWalk = 3;
         int PlayerRun;
         int FirstGemPosition = 0;
-        int WallCounter = 0;
         Random r = new Random();
         Gem[] Gems = new Gem[3];
         public MainWindow()
@@ -48,16 +45,20 @@ namespace GameProject
             map.Library.AddPicture("stones", "stones.jpg");
             map.SetMapBackground("stones");
             PlayerRun = PlayerWalk * 2;
-            map.Library.AddContainer("wall", "wall");
-            map.ContainerSetSize("wall", 50, 50);
-            map.ContainerSetCoordinate("wall", WallX, WallY);
+            //map.Library.AddContainer("wall", "wall");
+            //map.ContainerSetSize("wall", 50, 50);
+            //map.ContainerSetCoordinate("wall", WallX, WallY);
             CreateGems();
             CreatePlayer();
-            map.Library.AddContainer("fon", "wall", ContainerType.TiledImage);
-            map.ContainerSetSize("fon", 50, 500);
-            map.ContainerSetTileSize("fon", 50, 50);
-            map.ContainerSetCoordinate("fon",25, 25);
-            
+            CreateWalls(20,500,50,1020,0);
+            CreateWalls(975, 20, 1860, 50,1);
+            CreateWalls(1880,530,50,975,2);
+            CreateWalls(950,978,1815,50,3);
+            //map.Library.AddContainer("fon", "wall", ContainerType.TiledImage);
+            //map.ContainerSetSize("fon", 50, 500);
+            //map.ContainerSetTileSize("fon", 50, 50);
+            //map.ContainerSetCoordinate("fon",25, 25);
+            Player.SetCoordinates(80, 80);
             timer.AddAction(CheckKey, 10);
             //Done:Доделать движение: устранить эффект перепрыгивания стены, вернув координаты в исходное состояние; добавить 2 кнопки.
             //Dont know how:Сделать функцию, которая принимает все параметры контейнера и создает его, чтобы в основной программе можно было создать контейнер в одну строчку.
@@ -80,16 +81,17 @@ namespace GameProject
             map.ContainerSetIndents(ContainerName, 5, 5);
             map.ContainerSetZIndex(ContainerName, z);
         }
-        void CreateWalls(int LeftTopX,int LeftTopY,int RightBottomX, int RightBottomY)
+        void CreateWalls(int CentreX,int CentreY,int SizeX,int SizeY,int Counter)
         {
-            map.Library.AddContainer("Wall" + WallCounter.ToString() ,"wall", ContainerType.TiledImage);
-            map.ContainerSetSize("Wall" + WallCounter.ToString(), 50, 500);
-            map.ContainerSetTileSize("Wall" + WallCounter.ToString(), 50, 50);
-            //TODO:Доделать позиционирование контейнера со стеной (размер, координаты).
-            //TODO:Задание с массивами 2,3 из предыдущего урока
-            //TODO:Сделать массив стен проверку движения через стену.
+            string WallName = "Wall" + Counter.ToString();
+            map.Library.AddContainer(WallName, "wall", ContainerType.TiledImage);
+            map.ContainerSetSize(WallName, SizeX, SizeY);
+            map.ContainerSetTileSize(WallName, 50, 50);
+            map.ContainerSetCoordinate(WallName, CentreX, CentreY);
         }
-
+        //TODO:Доделать позиционирование контейнера со стеной (размер, координаты)
+        //TODO:Задание с массивами 2,3 из предыдущего урока
+        //TODO:Сделать массив стен проверку движения через стену.
         void CreatePlayer()
         {
             Player.ContainerName = "Fire";
@@ -171,8 +173,16 @@ namespace GameProject
         }
         void PlayerMove(int nx,int ny)
         {
+            bool PlayerMoveInWalls = false;
             map.ContainerMovePreview(Player.ContainerName, nx, ny, 0);
-            if (!(map.CollisionContainers(Player.ContainerName, "wall", true)))
+            for(int i=0;i<=3;i++)
+            {
+                if (map.CollisionContainers(Player.ContainerName, "Wall"+i.ToString(), true))
+                {
+                    PlayerMoveInWalls = true;
+                }
+            }
+            if (!(PlayerMoveInWalls))
             {
                 Player.SetCoordinates(nx, ny);
                 CollectGems();
