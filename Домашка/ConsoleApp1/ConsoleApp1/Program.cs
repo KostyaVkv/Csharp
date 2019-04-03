@@ -8,7 +8,6 @@ namespace ConsoleApp1
 {
     class Program
     { 
-        
         static void Main(string[] args)
         {
             int[,] homework = new int[8, 8];
@@ -17,10 +16,18 @@ namespace ConsoleApp1
                 for(int j=0;j<8;j++)
                 {
                     homework[i, j] = 1 + j + i;
-
+                }
+            }
+            int[,] Work = new int[8, 8];
+            for(int a=0;a<8;a++)
+            {
+                for(int b=0;b<=a;b++)
+                {
+                    Work[a, b] = b + 1;
                 }
             }
             NonMain(homework);
+            NonMain(Work);
             Console.ReadKey();
         }
         static void NonMain(int [,] a)
@@ -29,14 +36,11 @@ namespace ConsoleApp1
             {
                 for(int j=0;j<a.GetLength(1);j++)
                 {
-                    
                     Console.Write(a[i, j]);
-                 
                     Console.Write("\t");
                 }
                 Console.WriteLine();
             }
-            
         }
     }
 }
