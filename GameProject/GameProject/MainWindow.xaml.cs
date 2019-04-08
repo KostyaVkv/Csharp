@@ -28,7 +28,6 @@ namespace GameProject
         int PlayerWalk = 3;
         int PlayerRun;
         int FirstGemPosition = 0;
-        int ContainerCounter=0;
         List<Enemy> Enemneis=new List<Enemy>();
         Random r = new Random();
         Gem[] Gems = new Gem[3];
@@ -36,9 +35,7 @@ namespace GameProject
         {
             InitializeComponent();
             map = MapCreator.CreateMap(this, 38, 20, 50);
-            Gem.map = map;
-            Players.map = map;
-            Enemy.map = map;
+            Helper.map = map;
             map.Library.ImagesFolder = new PathInfo { Path = "..\\..\\images", Type = PathType.Relative };
             map.Library.AddPicture("wall", "wall.png");
             map.Library.AddPicture("fire", "fire.png");
@@ -61,10 +58,11 @@ namespace GameProject
             {
                 CreateEnemy();
             }
-            CreateWalls(20,500,50,1020,0);
-            CreateWalls(975, 20, 1860, 50,1);
-            CreateWalls(1880,530,50,975,2);
-            CreateWalls(950,978,1815,50,3);
+            CreateWalls(20,500,50,1020);
+            CreateWalls(975, 20, 1860, 50);
+            CreateWalls(1880,530,50,975);
+            CreateWalls(950,978,1815,50);
+            CreateWalls(500, 500, 250, 250);
             //map.Library.AddContainer("fon", "wall", ContainerType.TiledImage);
             //map.ContainerSetSize("fon", 50, 500);
             //map.ContainerSetTileSize("fon", 50, 50);
@@ -97,12 +95,12 @@ namespace GameProject
         void CreateEnemy()
         {
             Enemy Ghost = new Enemy();
-            Ghost.ContainerName = "Ghost" + ContainerCounter.ToString();
-            Ghost.Picture ="ghost"+ContainerCounter.ToString() ;
+            Ghost.ContainerName = "Ghost" + Helper.EnemyCounter.ToString();
+            Ghost.Picture ="ghost"+ Helper.EnemyCounter.ToString() ;
             CreateContainers(Ghost.ContainerName, 101, Ghost.Picture);
             Ghost.SetCoordinates(r.Next(50,1700), r.Next(50,950));
             Ghost.SetGoal();
-            ContainerCounter++;
+            Helper.EnemyCounter++;
             Enemneis.Add(Ghost);
         }
         void MoveEnemies()
@@ -110,34 +108,20 @@ namespace GameProject
             for (int f=0;f<Enemneis.Count;f++)
             {
                 Enemneis[f].EnemyMove();
-                EnemyReset();
+                Enemneis[f].CheckGoal();
             }
         }
-        void EnemyReset()
+        void CreateWalls(int CentreX,int CentreY,int SizeX,int SizeY)
         {
-            for(int g=0;g<Enemneis.Count;g++)
-            {
-                int resetX = Enemneis[g].X - Enemneis[g].GoalX;
-                Math.Abs(resetX);
-                int resetY = Enemneis[g].Y - Enemneis[g].GoalY;
-                Math.Abs(resetY);
-                if ((resetX <= 10) && (resetY <= 10))
-                {
-                    Enemneis[g].SetGoal();
-                }
-            }
-        }
-        void CreateWalls(int CentreX,int CentreY,int SizeX,int SizeY,int Counter)
-        {
-            string WallName = "Wall" + Counter.ToString();
+            string WallName = "Wall" + Helper.WallCounter.ToString();
             map.Library.AddContainer(WallName, "wall", ContainerType.TiledImage);
             map.ContainerSetSize(WallName, SizeX, SizeY);
             map.ContainerSetTileSize(WallName, 50, 50);
             map.ContainerSetCoordinate(WallName, CentreX, CentreY);
+            Helper.WallCounter++;
         }
-        //TODO:Доделать позиционирование контейнера со стеной (размер, координаты)
-        //TODO:Задание с массивами 2,3 из предыдущего урока
-        //TODO:Сделать массив стен проверку движения через стену.
+       
+        //TODO:Сделать проверку кристалов и стен
         void CreatePlayer()
         {
             Player.ContainerName = "Fire";
@@ -180,6 +164,7 @@ namespace GameProject
                 }
             }
         }
+       
         void SetGemRandomCoordinate(Gem G)
         {
             int x = r.Next(0, 1820);
@@ -228,21 +213,11 @@ namespace GameProject
                     y = 500 - i * 10;
                 }
             }
-            //TODO:Сделать нормальные рандомные координаты
             G.SetCoordinates(x, y);
         }
         void PlayerMove(int nx,int ny)
         {
-            bool PlayerMoveInWalls = false;
-            map.ContainerMovePreview(Player.ContainerName, nx, ny, 0);
-            for(int i=0;i<=3;i++)
-            {
-                if (map.CollisionContainers(Player.ContainerName, "Wall"+i.ToString(), true))
-                {
-                    PlayerMoveInWalls = true;
-                }
-            }
-            if (!(PlayerMoveInWalls))
+            if (!(Helper.CollisionWalls(nx, ny, Player.ContainerName,Helper.WallCounter) ))
             {
                 Player.SetCoordinates(nx, ny);
                 CollectGems();
@@ -297,28 +272,26 @@ namespace GameProject
     {
         public int X { get; private set; }
         public int Y { get; private set; }
-        static public UniversalMap_Wpf map;
         public string Picture;
         public string ContainerName;
         public void SetCoordinates(int x, int y)
         {
             X = x;
             Y = y;
-            map.ContainerSetCoordinate(ContainerName, x, y);
+            Helper.map.ContainerSetCoordinate(ContainerName, x, y);
         }
     }
     class Players
     {
         public int X { get; private set; }
         public int Y { get; private set; }
-        static public UniversalMap_Wpf map;
         public string Picture;
         public string ContainerName;
         public void SetCoordinates(int x, int y)
         {
             X = x;
             Y = y;
-            map.ContainerSetCoordinate(ContainerName, x, y);
+            Helper.map.ContainerSetCoordinate(ContainerName, x, y);
         }
     }
     class Enemy
@@ -328,7 +301,6 @@ namespace GameProject
         public int GoalX { get; private set; }
         public int GoalY { get; private set; }
         int EnemySpeed=2;
-        static public UniversalMap_Wpf map;
         static Random r = new Random();
         public string Picture;
         public string ContainerName;
@@ -336,16 +308,26 @@ namespace GameProject
         {
             X = x;
             Y = y;
-            map.ContainerSetCoordinate(ContainerName, x, y);
+            Helper.map.ContainerSetCoordinate(ContainerName, x, y);
         }
         public void SetGoal()
         {
              GoalX = r.Next(200, 1700);
              GoalY = r.Next(50, 950);
         }
+        public void CheckGoal()
+        {
+            if ((Math.Abs(X - GoalX) <= 2)
+                 && (Math.Abs(Y - GoalY) <= 2))
+            {
+               SetGoal();
+            }
+        }
         public void EnemyMove()
         {
-            if(X > GoalX)
+            int SaveX = X;
+            int SaveY = Y;
+            if (X > GoalX)
             {
                 X -= EnemySpeed;
             }
@@ -361,7 +343,36 @@ namespace GameProject
             {
                 Y += EnemySpeed;
             }
-            map.ContainerSetCoordinate(ContainerName,X, Y);
+            if (!(Helper.CollisionWalls(X, Y, ContainerName, Helper.WallCounter)))
+            {
+                Helper.map.ContainerSetCoordinate(ContainerName, X, Y);
+            }
+            else
+            {
+                X = SaveX;
+                Y = SaveY;
+                SetGoal();
+            }
+        }
+    }
+    class Helper
+    {
+      static public UniversalMap_Wpf map;
+       static public int EnemyCounter = 0;
+        static public int WallCounter = 0;
+        static public  bool CollisionWalls(int x, int y, string ContainerName,int Counter)
+      {
+            map.ContainerMovePreview(ContainerName, x, y, 0);
+            bool MoveInWalls = false;
+            for (int i = 0; i < Counter; i++)
+            {
+                if (map.CollisionContainers(ContainerName, "Wall" + i.ToString(), true))
+                {
+                    MoveInWalls = true;
+                    break;
+                }
+            }
+            return MoveInWalls;
         }
     }
 }
