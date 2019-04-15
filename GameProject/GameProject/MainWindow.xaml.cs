@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using GameMaps;
+using GameMaps.Layouts;
 namespace GameProject
 {
     /// <summary>
@@ -20,17 +21,24 @@ namespace GameProject
     /// </summary>
     public partial class MainWindow : Window
     {
+        IGameScreenLayout Lay;
+        CellMapInfo MapInfo;
         UniversalMap_Wpf map;
+        InventoryPanel Inventory;
         TimerController timer = new TimerController();
         Players Player = new Players();
-        
         List<Enemy> Enemneis=new List<Enemy>();
         Random r = new Random();
         Gem[] Gems = new Gem[3];
         public MainWindow()
         {
             InitializeComponent();
-            map = MapCreator.CreateMap(this, 38, 20, 50);
+            Lay = LayoutsFactory.GetLayout(LayoutType.Vertical, this.Content);
+            MapInfo = new CellMapInfo(38, 20, 50, 5);
+            map = MapCreator.GetUniversalMap(this, MapInfo);
+            Lay.Attach(map, 0);
+            Inventory = new InventoryPanel(map.Library, 50, 14);
+            Lay.Attach(Inventory, 1);
             Helper.map = map;
             map.Library.ImagesFolder = new PathInfo { Path = "..\\..\\images", Type = PathType.Relative };
             map.Library.AddPicture("wall", "wall.png");
@@ -42,8 +50,21 @@ namespace GameProject
             map.Library.AddPicture("ghost0", "GHOST.png");
             map.Library.AddPicture("ghost1", "GHOST1.png");
             map.Library.AddPicture("ghost2", "GHOST2.png");
-            map.Library.AddPicture("Nothing", "nothing.png");
+            map.Library.AddPicture("gate closed", "gate_closed.png");
+            string[] exp = new string[10]; 
+            for(int i=0; i<=9;i++)
+            {
+                exp[i] = "exp" + i.ToString();
+                map.Library.AddPicture(exp[i], exp[i] + ".png");
+            }
+            map.Library.AddPicture("fon", "Fon.jpg");
             map.SetMapBackground("stones");
+            Inventory.AddItem("Lives", "fire");
+            Inventory.SetBackground(Brushes.Transparent);
+            AnimationDefinition a = new AnimationDefinition();
+            a.AddEqualFrames(50, exp);
+            a.LastFrame = "exp9";
+            map.Library.AddAnimation("Explosion", a);
             Helper.PlayerRun = Helper.PlayerWalk * 2;
             //map.Library.AddContainer("wall", "wall");
             //map.ContainerSetSize("wall", 50, 50);
@@ -59,6 +80,8 @@ namespace GameProject
             CreateWalls(1880,530,50,975);
             CreateWalls(950,978,1815,50);
             CreateWalls(500, 500, 250, 250);
+            CreateContainers("Gate", 101, "gate closed");
+            map.ContainerSetCoordinate("Gate", 1000, 700);
             //map.Library.AddContainer("fon", "wall", ContainerType.TiledImage);
             //map.ContainerSetSize("fon", 50, 500);
             //map.ContainerSetTileSize("fon", 50, 50);
@@ -94,7 +117,7 @@ namespace GameProject
             Ghost.ContainerName = "Ghost" + Helper.EnemyCounter.ToString();
             Ghost.Picture ="ghost"+ Helper.EnemyCounter.ToString() ;
             CreateContainers(Ghost.ContainerName, 101, Ghost.Picture);
-            Ghost.SetCoordinates(r.Next(50,1700), r.Next(50,950));
+            Ghost.SetCoordinates(r.Next(100,1600), r.Next(100,850));
             Ghost.SetGoal();
             Helper.EnemyCounter++;
             Enemneis.Add(Ghost);
@@ -116,7 +139,10 @@ namespace GameProject
             map.ContainerSetCoordinate(WallName, CentreX, CentreY);
             Helper.WallCounter++;
         }
-       
+       void UpdateLives ()
+       {
+            Inventory.SetText("Lives", Player.Lives.ToString());
+       }
         //TODO:Сделать проверку кристалов и стен
         void CreatePlayer() 
         {
@@ -124,6 +150,7 @@ namespace GameProject
             Player.Picture = "fire";
             CreateContainers(Player.ContainerName, 102, Player.Picture);
             map.ContainerSetCoordinate(Player.ContainerName, Player.X, Player.Y);
+            UpdateLives();
         }
         void PlayerPlusEnemy()
         {
@@ -135,6 +162,8 @@ namespace GameProject
                 {
                     x = 75;
                     y = 75;
+                    Player.Lives--;
+                    UpdateLives();
                 }
             }
             Player.SetCoordinates(x, y);
@@ -157,66 +186,72 @@ namespace GameProject
                 if (map.CollisionContainers("Fire", "Gem" + i.ToString()))
                 {
                     SetGemRandomCoordinate(Gems[i]);
+                    map.AnimationStart(Gems[i].ContainerName, "Explosion", 2);
                 }
             }
         }
        
         void SetGemRandomCoordinate(Gem G)
         {
-            int x = r.Next(0, 1820);
-            int y = r.Next(0, 980);
-            int i = r.Next(1, 5);
-            if (Helper.FirstGemPosition == 0)
+            while (true)
             {
-                int FirstX = 500 + r.Next(1, 5) * 100;
-                int FirstY = 500 - r.Next(1, 5) * 100;
-                FirstX = FirstX - r.Next(1, 5) * 10;
-                FirstY = FirstY - r.Next(1, 5) * 10;
-                x = FirstX;
-                y = FirstY;
-                Helper.FirstGemPosition++;
-            }
-            else
-            {
-                if (Player.X - x <= 100 || Player.Y - y <= 100 || x - Player.X <= 100 || y - Player.Y <= 100)
+
+
+                int x = r.Next(0, 1820);
+                int y = r.Next(0, 980);
+                int i = r.Next(1, 5);
+                if (Helper.FirstGemPosition == 0)
                 {
-                    if (Player.X < 100 || Player.Y < 100)
+                    int FirstX = 500 + r.Next(1, 5) * 100;
+                    int FirstY = 500 - r.Next(1, 5) * 100;
+                    FirstX = FirstX - r.Next(1, 5) * 10;
+                    FirstY = FirstY - r.Next(1, 5) * 10;
+                    x = FirstX;
+                    y = FirstY;
+                    Helper.FirstGemPosition++;
+                }
+                else
+                {
+                    if (Player.X - x <= 100 || Player.Y - y <= 100 || x - Player.X <= 100 || y - Player.Y <= 100)
                     {
-                        x += 101;
-                        y += 101;
+                        if (Player.X < 100 || Player.Y < 100)
+                        {
+                            x += 101;
+                            y += 101;
+                        }
+                        if (Player.X > 1720 || Player.Y > 880)
+                        {
+                            x -= 101;
+                            y -= 101;
+                        }
+                        if (Player.X > 1720 || Player.Y < 100)
+                        {
+                            x -= 101;
+                            y += 101;
+                        }
+                        if (Player.X < 100 || Player.Y > 880)
+                        {
+                            x += 101;
+                            y -= 100;
+                        }
                     }
-                    if (Player.X > 1720 || Player.Y > 880)
+                    if (x >= 1820 || y >= 980 || x < 0 || y < 0)
                     {
-                        x -= 101;
-                        y -= 101;
-                    }
-                    if (Player.X > 1720 || Player.Y < 100)
-                    {
-                        x -= 101;
-                        y += 101;
-                    }
-                    if (Player.X < 100 || Player.Y > 880)
-                    {
-                        x += 101;
-                        y -= 100;
+                        x = 500 - i * 100;
+                        y = 500 + i * 100;
+                        x = 500 + i * 10;
+                        y = 500 - i * 10;
                     }
                 }
-                if (x >= 1820 || y >= 980 || x < 0 || y < 0)
+                //TODO: Проверить коррекность работы пересечений.
+                if (!(Helper.CollisionWalls(x, y, G.ContainerName)))
                 {
-                    x = 500 - i * 100;
-                    y = 500 + i * 100;
-                    x = 500 + i * 10;
-                    y = 500 - i * 10;
+                    G.SetCoordinates(x, y);
+                    break;
                 }
             }
-            if (!(Helper.CollisionWalls(x, y, G.ContainerName)))
-            {
-                G.SetCoordinates(x, y);
-            }
-            else
-            {
-                SetGemRandomCoordinate(G);
-            }
+            //Создаём рандомные координаты.
+            //Проверка попадания в стену.
         }
         void PlayerMove(int nx,int ny)
         {
@@ -289,6 +324,7 @@ namespace GameProject
         public int X { get; private set; }
         public int Y { get; private set; }
         public string Picture;
+        public int Lives = 3;
         public string ContainerName;
         public void SetCoordinates(int x, int y)
         {
