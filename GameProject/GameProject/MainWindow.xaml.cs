@@ -23,11 +23,7 @@ namespace GameProject
         UniversalMap_Wpf map;
         TimerController timer = new TimerController();
         Players Player = new Players();
-        int[] SetGemX = new int[3];
-        int[] SetGemY = new int[3];
-        int PlayerWalk = 3;
-        int PlayerRun;
-        int FirstGemPosition = 0;
+        
         List<Enemy> Enemneis=new List<Enemy>();
         Random r = new Random();
         Gem[] Gems = new Gem[3];
@@ -48,7 +44,7 @@ namespace GameProject
             map.Library.AddPicture("ghost2", "GHOST2.png");
             map.Library.AddPicture("Nothing", "nothing.png");
             map.SetMapBackground("stones");
-            PlayerRun = PlayerWalk * 2;
+            Helper.PlayerRun = Helper.PlayerWalk * 2;
             //map.Library.AddContainer("wall", "wall");
             //map.ContainerSetSize("wall", 50, 50);
             //map.ContainerSetCoordinate("wall", WallX, WallY);
@@ -122,7 +118,7 @@ namespace GameProject
         }
        
         //TODO:Сделать проверку кристалов и стен
-        void CreatePlayer()
+        void CreatePlayer() 
         {
             Player.ContainerName = "Fire";
             Player.Picture = "fire";
@@ -170,7 +166,7 @@ namespace GameProject
             int x = r.Next(0, 1820);
             int y = r.Next(0, 980);
             int i = r.Next(1, 5);
-            if (FirstGemPosition == 0)
+            if (Helper.FirstGemPosition == 0)
             {
                 int FirstX = 500 + r.Next(1, 5) * 100;
                 int FirstY = 500 - r.Next(1, 5) * 100;
@@ -178,7 +174,7 @@ namespace GameProject
                 FirstY = FirstY - r.Next(1, 5) * 10;
                 x = FirstX;
                 y = FirstY;
-                FirstGemPosition++;
+                Helper.FirstGemPosition++;
             }
             else
             {
@@ -213,11 +209,18 @@ namespace GameProject
                     y = 500 - i * 10;
                 }
             }
-            G.SetCoordinates(x, y);
+            if (!(Helper.CollisionWalls(x, y, G.ContainerName)))
+            {
+                G.SetCoordinates(x, y);
+            }
+            else
+            {
+                SetGemRandomCoordinate(G);
+            }
         }
         void PlayerMove(int nx,int ny)
         {
-            if (!(Helper.CollisionWalls(nx, ny, Player.ContainerName,Helper.WallCounter) ))
+            if (!(Helper.CollisionWalls(nx, ny, Player.ContainerName) ))
             {
                 Player.SetCoordinates(nx, ny);
                 CollectGems();
@@ -237,10 +240,10 @@ namespace GameProject
             int x = Player.X;
             int y = Player.Y;
             if (map.Keyboard.IsKeyPressed(Key.LeftShift))
-                Speed = PlayerRun;
+                Speed = Helper.PlayerRun;
             else
             {
-                Speed = PlayerWalk;
+                Speed = Helper.PlayerWalk;
             }
             if (map.Keyboard.IsKeyPressed(Key.W))
             {
@@ -343,7 +346,7 @@ namespace GameProject
             {
                 Y += EnemySpeed;
             }
-            if (!(Helper.CollisionWalls(X, Y, ContainerName, Helper.WallCounter)))
+            if (!(Helper.CollisionWalls(X, Y, ContainerName)))
             {
                 Helper.map.ContainerSetCoordinate(ContainerName, X, Y);
             }
@@ -357,14 +360,17 @@ namespace GameProject
     }
     class Helper
     {
-      static public UniversalMap_Wpf map;
-       static public int EnemyCounter = 0;
+        static public UniversalMap_Wpf map;
+        static public int EnemyCounter = 0;
         static public int WallCounter = 0;
-        static public  bool CollisionWalls(int x, int y, string ContainerName,int Counter)
+        static public int PlayerWalk = 3;
+        static public int PlayerRun;
+        static public int FirstGemPosition = 0;
+        static public  bool CollisionWalls(int x, int y, string ContainerName)
       {
             map.ContainerMovePreview(ContainerName, x, y, 0);
             bool MoveInWalls = false;
-            for (int i = 0; i < Counter; i++)
+            for (int i = 0; i < WallCounter; i++)
             {
                 if (map.CollisionContainers(ContainerName, "Wall" + i.ToString(), true))
                 {
