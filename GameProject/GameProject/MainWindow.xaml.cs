@@ -42,7 +42,7 @@ namespace GameProject
             Helper.map = map;
             map.Library.ImagesFolder = new PathInfo { Path = "..\\..\\images", Type = PathType.Relative };
             map.Library.AddPicture("wall", "wall.png");
-            map.Library.AddPicture("fire", "fire.png");
+            map.Library.AddPicture("fire", "Fire0.png");
             map.Library.AddPicture("Gem0", "gem_green.png");
             map.Library.AddPicture("Gem1", "gem_blue.png");
             map.Library.AddPicture("Gem2", "gem_red.png");
@@ -51,8 +51,9 @@ namespace GameProject
             map.Library.AddPicture("ghost1", "GHOST1.png");
             map.Library.AddPicture("ghost2", "GHOST2.png");
             map.Library.AddPicture("gate closed", "gate_closed.png");
-            string[] exp = new string[10]; 
-            for(int i=0; i<=9;i++)
+            map.Library.AddPicture("chest", "Chest.png");
+            string[] exp = new string[11]; 
+            for(int i=0; i<=10;i++)
             {
                 exp[i] = "exp" + i.ToString();
                 map.Library.AddPicture(exp[i], exp[i] + ".png");
@@ -63,7 +64,7 @@ namespace GameProject
             Inventory.SetBackground(Brushes.Transparent);
             AnimationDefinition a = new AnimationDefinition();
             a.AddEqualFrames(50, exp);
-            a.LastFrame = "exp9";
+            a.LastFrame = "exp10";
             map.Library.AddAnimation("Explosion", a);
             Helper.PlayerRun = Helper.PlayerWalk * 2;
             //map.Library.AddContainer("wall", "wall");
@@ -80,8 +81,8 @@ namespace GameProject
             CreateWalls(1880,530,50,975);
             CreateWalls(950,978,1815,50);
             CreateWalls(500, 500, 250, 250);
-            CreateContainers("Gate", 101, "gate closed");
-            map.ContainerSetCoordinate("Gate", 1000, 700);
+            CreateContainers("Chest", 101, "chest");
+            map.ContainerSetCoordinate("Chest", 1000, 700);
             //map.Library.AddContainer("fon", "wall", ContainerType.TiledImage);
             //map.ContainerSetSize("fon", 50, 500);
             //map.ContainerSetTileSize("fon", 50, 50);
@@ -117,11 +118,21 @@ namespace GameProject
             Ghost.ContainerName = "Ghost" + Helper.EnemyCounter.ToString();
             Ghost.Picture ="ghost"+ Helper.EnemyCounter.ToString() ;
             CreateContainers(Ghost.ContainerName, 101, Ghost.Picture);
-            Ghost.SetCoordinates(r.Next(100,1600), r.Next(100,850));
+            while(true)
+            {
+            int x = r.Next(100, map.XAbsolute - 100);
+            int y = r.Next(100, map.YAbsolute - 100);
+                if (!(Helper.CollisionWalls(x, y, Ghost.ContainerName)))
+                {
+                    Ghost.SetCoordinates(x, y);
+                    break;
+                }
+            }
             Ghost.SetGoal();
             Helper.EnemyCounter++;
             Enemneis.Add(Ghost);
         }
+        
         void MoveEnemies()
         {
             for (int f=0;f<Enemneis.Count;f++)
@@ -186,19 +197,27 @@ namespace GameProject
                 if (map.CollisionContainers("Fire", "Gem" + i.ToString()))
                 {
                     SetGemRandomCoordinate(Gems[i]);
-                    map.AnimationStart(Gems[i].ContainerName, "Explosion", 2);
+                   // 
                 }
             }
         }
-       
+       void PlayerandChest()
+        {
+            if(map.CollisionContainers(Player.ContainerName,"Chest"))
+            {
+                map.AnimationStart("Chest", "Explosion", 1);
+                
+                Player.Lives--;
+            }
+        }
         void SetGemRandomCoordinate(Gem G)
         {
             while (true)
             {
 
 
-                int x = r.Next(0, 1820);
-                int y = r.Next(0, 980);
+                int x = r.Next(0, map.XAbsolute);
+                int y = r.Next(0, map.YAbsolute);
                 int i = r.Next(1, 5);
                 if (Helper.FirstGemPosition == 0)
                 {
@@ -235,7 +254,7 @@ namespace GameProject
                             y -= 100;
                         }
                     }
-                    if (x >= 1820 || y >= 980 || x < 0 || y < 0)
+                    if (x >= map.XAbsolute || y >= map.YAbsolute || x < 0 || y < 0)
                     {
                         x = 500 - i * 100;
                         y = 500 + i * 100;
@@ -258,6 +277,7 @@ namespace GameProject
             if (!(Helper.CollisionWalls(nx, ny, Player.ContainerName) ))
             {
                 Player.SetCoordinates(nx, ny);
+                PlayerandChest();
                 CollectGems();
             }
             //else
@@ -351,8 +371,8 @@ namespace GameProject
         }
         public void SetGoal()
         {
-             GoalX = r.Next(200, 1700);
-             GoalY = r.Next(50, 950);
+             GoalX = r.Next(200, Helper.map.XAbsolute-100);
+             GoalY = r.Next(50, Helper.map.YAbsolute-120);
         }
         public void CheckGoal()
         {
