@@ -174,7 +174,6 @@ namespace GameProject
                     x = 75;
                     y = 75;
                     Player.Lives--;
-                    UpdateLives();
                 }
             }
             Player.SetCoordinates(x, y);
@@ -203,11 +202,12 @@ namespace GameProject
         }
        void PlayerandChest()
         {
-            if(map.CollisionContainers(Player.ContainerName,"Chest"))
+            int R = r.Next(0, 5);
+            if (map.CollisionContainers(Player.ContainerName, "Chest") && R <= 2) 
             {
                 map.AnimationStart("Chest", "Explosion", 1);
-                
                 Player.Lives--;
+                 UpdateLives();
             }
         }
         void SetGemRandomCoordinate(Gem G)
