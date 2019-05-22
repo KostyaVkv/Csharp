@@ -55,7 +55,7 @@ namespace GameProject
             map.Library.AddPicture("ghost2", "GHOST2.png");
             map.Library.AddPicture("gate closed", "gate_closed.png");
             map.Library.AddPicture("chest", "Chest.png");
-            for (int I = 0; I <= 1; I++)
+            for (int I = 0; I <= 3; I++)
             {
                 for (int j = 0; j <= 3; j++)
                 {
@@ -66,6 +66,8 @@ namespace GameProject
             string[] Fire = new string[10];
             string[] Portal0 = new string[4];
             string[] Portal1 = new string[4];
+            string[] Portal2 = new string[4];
+            string[] Portal3 = new string[4];
             for (int i=0; i<=10;i++)
             {
                 exp[i] = "exp" + i.ToString();
@@ -80,7 +82,10 @@ namespace GameProject
             {
                 Portal0[i] = "Portal0" + i.ToString();
                 Portal1[i] = "Portal1" + i.ToString();
+                Portal2[i] = "Portal2" + i.ToString();
+                Portal3[i] = "Portal3" + i.ToString();
             }
+           
             map.Library.AddPicture("fon", "Fon.jpg");
             map.SetMapBackground("stones");
             Inventory.AddItem("Lives", "Fire0");
@@ -101,6 +106,14 @@ namespace GameProject
             d.AddEqualFrames(80, Portal1);
             d.LastFrame = "Portal13";
             map.Library.AddAnimation("Portal1", d);
+            AnimationDefinition f = new AnimationDefinition();
+            f.AddEqualFrames(80, Portal2);
+            f.LastFrame = "Portal23";
+            map.Library.AddAnimation("Portal2", f);
+            AnimationDefinition e = new AnimationDefinition();
+            e.AddEqualFrames(80, Portal3);
+            e.LastFrame = "Portal33";
+            map.Library.AddAnimation("Portal3", e);
             Helper.PlayerRun = Helper.PlayerWalk * 2;
             //map.Library.AddContainer("wall", "wall");
             //map.ContainerSetSize("wall", 50, 50);
@@ -120,6 +133,8 @@ namespace GameProject
             map.ContainerSetCoordinate("Chest", 1000, 700);
             CreatePortals(0, 100, 200);
             CreatePortals(1, 800, 900);
+            CreatePortals(2, 1000, 500);
+            CreatePortals(3, 1800, 300);
             //map.Library.AddContainer("fon", "wall", ContainerType.TiledImage);
             //map.ContainerSetSize("fon", 50, 500);
             //map.ContainerSetTileSize("fon", 50, 50);
@@ -153,7 +168,7 @@ namespace GameProject
         {
             Portals Portal = new Portals();
             Portal.ContainerName = "Portal" + i.ToString();
-            Portal.Picture = "Portral" + i.ToString()+"0";
+            Portal.Picture = "Portal" + i.ToString()+"0";
             map.Library.AddContainer(Portal.ContainerName, Portal.Picture);
             map.ContainerSetSize(Portal.ContainerName,50,50);
             Portal.SetCoordinates(x, y);
@@ -254,14 +269,19 @@ namespace GameProject
         {
             int Count=0;
             Player.Moving = false;
-            for (int i=0;i<=Helper.PortalsCounter;i++)
-            {
-                if (map.CollisionContainers("Fire","Portal"+i.ToString()))
+           while(true)
+           {
+                if (map.CollisionContainers("Fire","Portal"+Count.ToString()))
                 {
-                    Count = i;
+                    PortalCount = Count;
+                    break;
+                }
+                else
+                {
+                    Count++;
                 }
             }
-            map.AnimationStart("Portal" + Count.ToString(), "Poratl" + Count.ToString(), 2, PlayerandPortal);
+            map.AnimationStart("Portal" + Count.ToString(), "Portal" + Count.ToString(), 2, PlayerandPortal);
         }
         void PlayerandPortal()
         {
