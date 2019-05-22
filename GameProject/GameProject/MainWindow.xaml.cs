@@ -30,6 +30,9 @@ namespace GameProject
         List<Enemy> Enemneis=new List<Enemy>();
         Random r = new Random();
         Gem[] Gems = new Gem[3];
+        Portals[] Portal = new Portals[3];
+        bool ChestExp = false;
+        int[,]PortalsCoordinates = new int[4, 2];
         public MainWindow()
         {
             InitializeComponent();
@@ -52,37 +55,71 @@ namespace GameProject
             map.Library.AddPicture("ghost2", "GHOST2.png");
             map.Library.AddPicture("gate closed", "gate_closed.png");
             map.Library.AddPicture("chest", "Chest.png");
-            string[] exp = new string[11]; 
-            for(int i=0; i<=10;i++)
+            for (int I = 0; I <= 1; I++)
+            {
+                for (int j = 0; j <= 3; j++)
+                {
+                    map.Library.AddPicture("Portal" + I.ToString()+j.ToString(), "Portal" + I.ToString()+j.ToString() + ".png");
+                }
+            }
+            string[] exp = new string[11];
+            string[] Fire = new string[10];
+            string[] Portal0 = new string[4];
+            string[] Portal1 = new string[4];
+            for (int i=0; i<=10;i++)
             {
                 exp[i] = "exp" + i.ToString();
                 map.Library.AddPicture(exp[i], exp[i] + ".png");
             }
+            for (int i = 0; i <= 9; i++)
+            {
+                Fire[i] = "Fire" + i.ToString();
+                map.Library.AddPicture(Fire[i], Fire[i] + ".png");
+            }
+            for (int i = 0; i <= 3; i++)
+            {
+                Portal0[i] = "Portal0" + i.ToString();
+                Portal1[i] = "Portal1" + i.ToString();
+            }
             map.Library.AddPicture("fon", "Fon.jpg");
             map.SetMapBackground("stones");
-            Inventory.AddItem("Lives", "fire");
+            Inventory.AddItem("Lives", "Fire0");
             Inventory.SetBackground(Brushes.Transparent);
             AnimationDefinition a = new AnimationDefinition();
             a.AddEqualFrames(50, exp);
             a.LastFrame = "exp10";
             map.Library.AddAnimation("Explosion", a);
+            AnimationDefinition b = new AnimationDefinition();
+            b.AddEqualFrames(80, Fire);
+            b.LastFrame = "Fire9";
+            map.Library.AddAnimation("Fire", b);
+            AnimationDefinition c = new AnimationDefinition();
+            c.AddEqualFrames(80, Portal0);
+            c.LastFrame = "Portal03";
+            map.Library.AddAnimation("Portal0", c);
+            AnimationDefinition d = new AnimationDefinition();
+            d.AddEqualFrames(80, Portal1);
+            d.LastFrame = "Portal13";
+            map.Library.AddAnimation("Portal1", d);
             Helper.PlayerRun = Helper.PlayerWalk * 2;
             //map.Library.AddContainer("wall", "wall");
             //map.ContainerSetSize("wall", 50, 50);
             //map.ContainerSetCoordinate("wall", WallX, WallY);
             CreateGems();
             CreatePlayer();
-            for(int i=0;i<3;i++)
-            {
-                CreateEnemy();
-            }
             CreateWalls(20,500,50,1020);
             CreateWalls(975, 20, 1860, 50);
             CreateWalls(1880,530,50,975);
             CreateWalls(950,978,1815,50);
             CreateWalls(500, 500, 250, 250);
+            for (int i = 0; i < 3; i++)
+            {
+                CreateEnemy();
+            }
             CreateContainers("Chest", 101, "chest");
             map.ContainerSetCoordinate("Chest", 1000, 700);
+            CreatePortals(0, 100, 200);
+            CreatePortals(1, 800, 900);
             //map.Library.AddContainer("fon", "wall", ContainerType.TiledImage);
             //map.ContainerSetSize("fon", 50, 500);
             //map.ContainerSetTileSize("fon", 50, 50);
@@ -112,6 +149,18 @@ namespace GameProject
             map.ContainerSetIndents(ContainerName, 5, 5);
             map.ContainerSetZIndex(ContainerName, z);
         }
+        void CreatePortals(int i,int x,int y)
+        {
+            Portals Portal = new Portals();
+            Portal.ContainerName = "Portal" + i.ToString();
+            Portal.Picture = "Portral" + i.ToString()+"0";
+            map.Library.AddContainer(Portal.ContainerName, Portal.Picture);
+            map.ContainerSetSize(Portal.ContainerName,50,50);
+            Portal.SetCoordinates(x, y);
+            PortalsCoordinates[i, 0] = x;
+            PortalsCoordinates[i, 1] = y;
+            Helper.PortalsCounter = i;
+        }
         void CreateEnemy()
         {
             Enemy Ghost = new Enemy();
@@ -132,7 +181,6 @@ namespace GameProject
             Helper.EnemyCounter++;
             Enemneis.Add(Ghost);
         }
-        
         void MoveEnemies()
         {
             for (int f=0;f<Enemneis.Count;f++)
@@ -158,9 +206,10 @@ namespace GameProject
         void CreatePlayer() 
         {
             Player.ContainerName = "Fire";
-            Player.Picture = "fire";
+            Player.Picture = "Fire0";
             CreateContainers(Player.ContainerName, 102, Player.Picture);
             map.ContainerSetCoordinate(Player.ContainerName, Player.X, Player.Y);
+            map.AnimationStart(Player.ContainerName, "Fire", -1);
             UpdateLives();
         }
         void PlayerPlusEnemy()
@@ -171,9 +220,10 @@ namespace GameProject
             {
                 if (map.CollisionContainers(Player.ContainerName, Enemneis[r].ContainerName))
                 {
-                    x = 75;
-                    y = 75;
+                    x = 100;
+                    y = 100;
                     Player.Lives--;
+                    UpdateLives();
                 }
             }
             Player.SetCoordinates(x, y);
@@ -196,26 +246,70 @@ namespace GameProject
                 if (map.CollisionContainers("Fire", "Gem" + i.ToString()))
                 {
                     SetGemRandomCoordinate(Gems[i]);
-                   // 
                 }
             }
         }
-       void PlayerandChest()
+        int PortalCount = 0;
+        void PlayerAndPortalin()
         {
-            int R = r.Next(0, 5);
-            if (map.CollisionContainers(Player.ContainerName, "Chest") && R <= 2) 
+            int Count=0;
+            Player.Moving = false;
+            for (int i=0;i<=Helper.PortalsCounter;i++)
             {
-                map.AnimationStart("Chest", "Explosion", 1);
-                Player.Lives--;
-                 UpdateLives();
+                if (map.CollisionContainers("Fire","Portal"+i.ToString()))
+                {
+                    Count = i;
+                }
             }
+            map.AnimationStart("Portal" + Count.ToString(), "Poratl" + Count.ToString(), 2, PlayerandPortal);
         }
-        void SetGemRandomCoordinate(Gem G)
+        void PlayerandPortal()
         {
             while (true)
             {
-
-
+                int Rand = r.Next(0, Helper.PortalsCounter + 1);
+                if (Rand!=PortalCount)
+                {
+                    Player.SetCoordinates(PortalsCoordinates[Rand, 0], PortalsCoordinates[Rand, 1]);
+                    map.AnimationStart("Portal" + Rand.ToString(), "Portal" + Rand.ToString(), 2,PlayerandPortalout);
+                    break;
+                }
+            }
+        }
+        void PlayerandPortalout()
+        {
+            Player.Moving = true;
+        }
+          void ChestCoordinates()
+          {
+            while (true)
+            {
+                int x = r.Next(100, map.XAbsolute - 100);
+                int y = r.Next(100, map.YAbsolute - 100);
+                if (!(Helper.CollisionWalls(x, y, "Chest")))
+                {
+                    map.ContainerSetCoordinate("Chest",x, y);
+                    break;
+                }
+            }
+            map.ContainerSetFrame("Chest", "chest");
+            ChestExp = false;
+          }
+       void PlayerandChest()
+       {
+            int R = r.Next(0, 5);
+            if (map.CollisionContainers(Player.ContainerName, "Chest") && R <= 2&&ChestExp==false) 
+            {
+                ChestExp = true;
+                 map.AnimationStart("Chest", "Explosion", 1,ChestCoordinates);
+                 Player.Lives--;
+                 UpdateLives();
+            }
+       }
+        void SetGemRandomCoordinate(Gem G)
+        {
+            while (true) 
+            { 
                 int x = r.Next(0, map.XAbsolute);
                 int y = r.Next(0, map.YAbsolute);
                 int i = r.Next(1, 5);
@@ -290,7 +384,7 @@ namespace GameProject
         }
         void CheckKey()
         {
-            bool Moving = false;
+           
             int Speed;
             int x = Player.X;
             int y = Player.Y;
@@ -303,24 +397,31 @@ namespace GameProject
             if (map.Keyboard.IsKeyPressed(Key.W))
             {
                 y -= Speed;
-                Moving = true;
+                Player.Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.A))
             {
                 x -= Speed;
-                Moving = true;
+                Player.Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.D))
             {
                 x += Speed;
-                Moving = true;
+                Player.Moving = true;
             }
             if (map.Keyboard.IsKeyPressed(Key.S))
             {
                 y += Speed;
-                Moving = true;
+                Player.Moving = true;
             }
-            if (Moving)
+            for (int i = 0; i <= Helper.PortalsCounter; i++)
+            {
+                if (map.Keyboard.IsKeyPressed(Key.Q) && map.CollisionContainers("Fire", "Portal" + i.ToString()))
+                {
+                    PlayerAndPortalin();
+                }
+            }
+            if (Player.Moving)
             {
                 PlayerMove(x,y);
             }
@@ -346,6 +447,7 @@ namespace GameProject
         public string Picture;
         public int Lives = 3;
         public string ContainerName;
+        public bool Moving = false;
         public void SetCoordinates(int x, int y)
         {
             X = x;
@@ -422,6 +524,7 @@ namespace GameProject
         static public int PlayerWalk = 3;
         static public int PlayerRun;
         static public int FirstGemPosition = 0;
+        static public int PortalsCounter;
         static public  bool CollisionWalls(int x, int y, string ContainerName)
       {
             map.ContainerMovePreview(ContainerName, x, y, 0);
@@ -435,6 +538,20 @@ namespace GameProject
                 }
             }
             return MoveInWalls;
+        }
+    }
+    class Portals
+    {
+        public int X { get; private set; }
+        public int Y { get; private set; }
+        public string Picture;
+        public string ContainerName;
+       
+        public void SetCoordinates(int x, int y)
+        {
+            X = x;
+            Y = y;
+            Helper.map.ContainerSetCoordinate(ContainerName, x, y);
         }
     }
 }
